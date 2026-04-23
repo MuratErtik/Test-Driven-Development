@@ -16,21 +16,19 @@ import static org.assertj.core.api.BDDAssertions.then;
 
 public class OrderServiceTests {
 
+    private OrderService orderService;
 
 
-    public static Stream<Arguments> order_requests() {
-
-        return Stream.of(
-                Arguments.of("code1",5,BigDecimal.valueOf(19.99),BigDecimal.valueOf(99.95)),
-                Arguments.of("code2",10,BigDecimal.valueOf(15),BigDecimal.valueOf(150))
-        );
+    @BeforeEach
+    public void beforeEach() {
+        orderService = new OrderService();
     }
 
     @Test
     public void it_should_create_a_new_order_with_5_items() {
 
         //given
-        OrderService service = new OrderService();
+
         CreateOrderRequest request = CreateOrderRequest.builder()
                 .amount(5)
                 .customerCode("code1")
@@ -42,7 +40,7 @@ public class OrderServiceTests {
 
         //when
 
-        OrderDto order = service.createOrder(request);
+        OrderDto order = orderService.createOrder(request);
 
 
         //then
@@ -58,7 +56,7 @@ public class OrderServiceTests {
     public void it_should_create_a_new_order_with_10_items() {
 
         //given
-        OrderService service = new OrderService();
+
         CreateOrderRequest request = CreateOrderRequest.builder()
                 .amount(10)
                 .customerCode("code1")
@@ -68,7 +66,7 @@ public class OrderServiceTests {
 
         //when
 
-        OrderDto order = service.createOrder(request);
+        OrderDto order = orderService.createOrder(request);
 
         //then
 
@@ -78,14 +76,31 @@ public class OrderServiceTests {
         then(order.getTotalPrice()).isEqualTo(BigDecimal.valueOf(150));
     }
 
+    public static Stream<Arguments> order_requests() {
 
+        return Stream.of(
+                Arguments.of("code1",5,BigDecimal.valueOf(19.99),BigDecimal.valueOf(99.95)),
+                Arguments.of("code2",10,BigDecimal.valueOf(15),BigDecimal.valueOf(150))
+        );
+    }
 
     // Having 2 methods which are names different but logics are same that's why using ParameterizedTest
     @ParameterizedTest
     @MethodSource("order_requests")
     public void it_should_create_a_new_orders(String productCode, Integer amount, BigDecimal unitPrice, BigDecimal totalPrice ) {
 
+        //given
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .amount(amount)
+                .customerCode(productCode)
+                .unitPrice(unitPrice)
+                .build();
+
         //when
+        OrderDto order = orderService.createOrder(request);
+
+        //then
+        then(order.getTotalPrice()).isEqualTo(totalPrice);
         
     }
 }
