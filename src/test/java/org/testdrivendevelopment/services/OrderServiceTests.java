@@ -2,27 +2,44 @@ package org.testdrivendevelopment.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.testdrivendevelopment.dtos.CreateOrderRequest;
 import org.testdrivendevelopment.dtos.OrderDto;
+import org.testdrivendevelopment.entites.Order;
+import org.testdrivendevelopment.repositories.OrderRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class OrderServiceTests {
 
+    @InjectMocks
     private OrderService orderService;
 
+    @Mock
+    private OrderRepository orderRepository;
 
-    @BeforeEach
-    public void beforeEach() {
-        orderService = new OrderService();
-    }
+    // after the mocking we dont need anymore to this method
+//    @BeforeEach
+//    public void beforeEach() {
+//        orderService = new OrderService(orderRepository);
+//        OrderRepository orderRepository = new OrderRepository() {
+//        }
+//
+//    }
 
     @Test
     public void it_should_create_a_new_order_with_5_items() {
@@ -96,11 +113,19 @@ public class OrderServiceTests {
                 .unitPrice(unitPrice)
                 .build();
 
+        //after the basic return OrderDto We are able to extend this method like check of Db returns or other things
+
+        Order order = new Order();
+        order.setId(111L);
+
+        when(orderRepository.save(any())).thenReturn(order);
+
+
         //when
-        OrderDto order = orderService.createOrder(request);
+        OrderDto orderDto = orderService.createOrder(request);
 
         //then
-        then(order.getTotalPrice()).isEqualTo(totalPrice);
+        then(orderDto.getTotalPrice()).isEqualTo(totalPrice);
         
     }
 }
