@@ -2,6 +2,7 @@ package org.testdrivendevelopment.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.testdrivendevelopment.clients.PaymentClient;
 import org.testdrivendevelopment.dtos.CreateOrderRequest;
 import org.testdrivendevelopment.dtos.OrderDto;
 import org.testdrivendevelopment.entites.Order;
@@ -15,6 +16,8 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
+    private final PaymentClient paymentClient;
+
     public OrderDto createOrder(CreateOrderRequest request) {
 
         BigDecimal totalPrice = request.getUnitPrice().multiply(BigDecimal.valueOf(request.getAmount()));
@@ -22,6 +25,8 @@ public class OrderService {
         Order order = Order.builder()
                 .totalPrice(totalPrice)
                 .build();
+
+        paymentClient.pay(order);
 
         Order savedOrder = orderRepository.save(order);
 
