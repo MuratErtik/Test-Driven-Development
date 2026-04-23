@@ -14,8 +14,11 @@ public class OrderService {
 
     public OrderDto createOrder(CreateOrderRequest request) {
 
+        BigDecimal totalPrice = request.getUnitPrice().multiply(BigDecimal.valueOf(request.getAmount()));
+
+
         return  OrderDto.builder()
-                .totalPrice(BigDecimal.valueOf(99.95))
+                .totalPrice(totalPrice)
                 .build();
     }
 }
