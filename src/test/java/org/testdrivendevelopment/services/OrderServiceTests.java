@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testdrivendevelopment.clients.PaymentClient;
 import org.testdrivendevelopment.dtos.CreateOrderRequest;
 import org.testdrivendevelopment.dtos.OrderDto;
 import org.testdrivendevelopment.entites.Order;
@@ -19,9 +20,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.throwable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTests {
@@ -32,6 +35,9 @@ public class OrderServiceTests {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private PaymentClient paymentClient;
+
     // after the mocking we dont need anymore to this method
 //    @BeforeEach
 //    public void beforeEach() {
@@ -41,57 +47,57 @@ public class OrderServiceTests {
 //
 //    }
 
-    @Test
-    public void it_should_create_a_new_order_with_5_items() {
-
-        //given
-
-        CreateOrderRequest request = CreateOrderRequest.builder()
-                .amount(5)
-                .customerCode("code1")
-                .unitPrice(BigDecimal.valueOf(19.99))
-                .build();
-
-
-
-
-        //when
-
-        OrderDto order = orderService.createOrder(request);
-
-
-        //then
-
-        then(order).isNotNull(); // at first createOrder method returns null that's mean you got a failed test
-        //so you can start to develop prod code
-
-
-        then(order.getTotalPrice()).isEqualTo(BigDecimal.valueOf(19.99).multiply(BigDecimal.valueOf(5)).setScale(2, RoundingMode.HALF_UP));
-    }
-
-    @Test
-    public void it_should_create_a_new_order_with_10_items() {
-
-        //given
-
-        CreateOrderRequest request = CreateOrderRequest.builder()
-                .amount(10)
-                .customerCode("code1")
-                .unitPrice(BigDecimal.valueOf(15))
-                .build();
-
-
-        //when
-
-        OrderDto order = orderService.createOrder(request);
-
-        //then
-
-        then(order).isNotNull(); // at first createOrder method returns null that's mean you got a failed test
-        //so you can start to develop prod code
-
-        then(order.getTotalPrice()).isEqualTo(BigDecimal.valueOf(150));
-    }
+//    @Test
+//    public void it_should_create_a_new_order_with_5_items() {
+//
+//        //given
+//
+//        CreateOrderRequest request = CreateOrderRequest.builder()
+//                .amount(5)
+//                .customerCode("code1")
+//                .unitPrice(BigDecimal.valueOf(19.99))
+//                .build();
+//
+//
+//
+//
+//        //when
+//
+//        OrderDto order = orderService.createOrder(request);
+//
+//
+//        //then
+//
+//        then(order).isNotNull(); // at first createOrder method returns null that's mean you got a failed test
+//        //so you can start to develop prod code
+//
+//
+//        then(order.getTotalPrice()).isEqualTo(BigDecimal.valueOf(19.99).multiply(BigDecimal.valueOf(5)).setScale(2, RoundingMode.HALF_UP));
+//    }
+//
+//    @Test
+//    public void it_should_create_a_new_order_with_10_items() {
+//
+//        //given
+//
+//        CreateOrderRequest request = CreateOrderRequest.builder()
+//                .amount(10)
+//                .customerCode("code1")
+//                .unitPrice(BigDecimal.valueOf(15))
+//                .build();
+//
+//
+//        //when
+//
+//        OrderDto order = orderService.createOrder(request);
+//
+//        //then
+//
+//        then(order).isNotNull(); // at first createOrder method returns null that's mean you got a failed test
+//        //so you can start to develop prod code
+//
+//        then(order.getTotalPrice()).isEqualTo(BigDecimal.valueOf(150));
+//    }
 
     public static Stream<Arguments> order_requests() {
 
@@ -127,5 +133,29 @@ public class OrderServiceTests {
         //then
         then(orderDto.getTotalPrice()).isEqualTo(totalPrice);
         
+    }
+
+    @Test
+    public void it_should_fail_order_creation_when_payment_failed() {
+
+        //given
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .amount(5)
+                .customerCode("productCode")
+                .unitPrice(BigDecimal.valueOf(19.99))
+                .build();
+
+        //when(paymentClient.pay(any())).thenThrow(() -> new IllegalArgumentException()); if it is returning <T>
+
+        doThrow(new IllegalArgumentException()).when(paymentClient).pay(any()); // if its returning void
+
+        //when
+        Throwable throwable = catchThrowable(() -> orderService.createOrder(request));
+
+        //then
+        then(throwable).isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(orderRepository);
+
     }
 }
